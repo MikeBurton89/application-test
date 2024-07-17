@@ -16,6 +16,7 @@ use App\Utility\MethodsBuilder;
 use GraphQL\Deferred;
 use App\Service\GraphQL\FieldEncryptionProvider;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\ArrayCollection;
 use App\Service\GraphQL\GetByFieldValuesQueryArgumentsProvider;
 
 use function in_array;
@@ -49,15 +50,16 @@ final class EventResolver implements ResolverInterface
         $getByFieldValuesQueryArgumentsProvider = $this->getByFieldValuesQueryArgumentsProvider;
         $buffer->add(Event::class, 'key', $key);
 
-        return new Deferred(fn() => $buffer->get(
-            Event::class,
-            'key',
-            $key,
-            function ($keys) use ($model, $getByFieldValuesQueryArgumentsProvider): Collection {
-                $queryCriteria = $getByFieldValuesQueryArgumentsProvider->toQueryCriteria('key', $keys);
-                return $model->getRepository()->find($queryCriteria);
-            }
-        )
+        return new Deferred(
+            fn() => $buffer->get(
+                Event::class,
+                'key',
+                $key,
+                function ($keys) use ($model, $getByFieldValuesQueryArgumentsProvider): Collection {
+                    $queryCriteria = $getByFieldValuesQueryArgumentsProvider->toQueryCriteria('key', $keys);
+                    return $model->getRepository()->find($queryCriteria);
+                }
+            )
         );
     }
 
@@ -95,7 +97,7 @@ final class EventResolver implements ResolverInterface
         // and return all participants that contain the query string.
         // The search should be case-insensitive.
         // If the query string is not provided, return all participants.
-        if ($queryString) {
+        if ('' !== $queryString && null !== $queryString) {
             $participants = $event->getParticipants();
             $filteredParticipants = array_filter($participants, function ($participant) use ($queryString) {
                 return stripos($participant->getName(), $queryString) !== false;
@@ -110,13 +112,13 @@ final class EventResolver implements ResolverInterface
         // TODO:
         // Event::program is a collection of Speech objects.
         // Return the event's program with the speeches sorted by startTime.
-        // do as the comment says
         $program = $event->getProgram();
-        $program = $program->toArray();
-        usort($program, function ($a, $b) {
+        $values = $program->getValues();
+
+        usort($values, function ($a, $b) {
             return $a->getStartTime() <=> $b->getStartTime();
         });
-
-        return $event->getProgram();
+        // Convert the sorted array back to a Collection
+        return new ArrayCollection($values);
     }
 }

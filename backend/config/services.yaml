@@ -72,3 +72,5 @@ services:
 
     App\Service\QueryHelper\QueryHelper:
         public: true
+    App\Validator\ConstraintValidProgramValidator:
+        tags: ['validator.constraint_validator']

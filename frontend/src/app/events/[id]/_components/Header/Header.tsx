@@ -13,10 +13,10 @@ export default function Header({
         <>
             <Typography.Title>
                 <Typography.Text type="secondary">
-                    {dayjs(event.date ?? "").format('L')}
+                    {dayjs(event?.date ?? "").format('L')}
                 </Typography.Text>
                 <br />
-                {event.name}
+                {event?.name}
             </Typography.Title>
         </>
     );

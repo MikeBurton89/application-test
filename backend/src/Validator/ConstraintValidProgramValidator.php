@@ -10,6 +10,7 @@ use Symfony\Component\Validator\ConstraintValidator;
 use Symfony\Component\Validator\Exception\UnexpectedTypeException;
 use Symfony\Component\Validator\Exception\UnexpectedValueException;
 
+
 final class ConstraintValidProgramValidator extends ConstraintValidator
 {
 	public function __construct()
@@ -36,6 +37,11 @@ final class ConstraintValidProgramValidator extends ConstraintValidator
 			return; // No overlap possible with 0 or 1 speech
 		}
 
+		$speeches = $speeches->toArray();
+		usort($speeches, function ($a, $b) {
+			return $a->getStartTime() <=> $b->getStartTime();
+		});
+
 		for ($i = 0; $i < count($speeches) - 1; $i++) {
 			$currentSpeech = $speeches[$i];
 			$nextSpeech = $speeches[$i + 1];
@@ -51,12 +57,16 @@ final class ConstraintValidProgramValidator extends ConstraintValidator
 
 	private function isOverlapping($speech1, $speech2)
 	{
-		$start1 = $speech1->getStartTime();
-		$end1 = $speech1->getEndTime();
-		$start2 = $speech2->getStartTime();
-		$end2 = $speech2->getEndTime();
+		$speech1StartTime = $speech1->getStartTime();
+		$speech1EndTime = $speech1->getEndTime();
+		$speech2StartTime = $speech2->getStartTime();
+		$speech2EndTime = $speech2->getEndTime();
 
-		return $start1 < $end2 && $start2 < $end1;
+		if ($speech1StartTime < $speech2EndTime && $speech2StartTime < $speech1EndTime) {
+			return true;
+		}
+
+		return false;
 	}
 }
 
